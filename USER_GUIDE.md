@@ -104,7 +104,7 @@ Once running, you can:
 
 ### Model Configuration
 
-- **Model**: Claude 3 Sonnet (`anthropic.claude-3-sonnet-20240229-v1:0`)
+- **Model**: Claude Sonnet 4 (`anthropic.claude-sonnet-4-20250514-v1:0`)
 - **Max Tokens**: 2000
 - **Temperature**: 0.7
 - **Top P**: 0.9

@@ -20,8 +20,8 @@ def test_bedrock_connection():
         bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
         
         # Test with a simple invocation
-        print("\n🧪 Testing connection to Claude 3 Sonnet...")
-        model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+        print("\n🧪 Testing connection to Claude 3.7 Sonnet...")
+        model_id = 'anthropic.claude-3-7-sonnet-20250219-v1:0'
         
         test_body = {
             "anthropic_version": "bedrock-2023-05-31",
