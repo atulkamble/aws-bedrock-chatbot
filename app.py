@@ -63,6 +63,25 @@ class BedrockChatbot:
         except ClientError as e:
             error_code = e.response['Error']['Code']
             error_message = e.response['Error']['Message']
+            
+            # Handle payment instrument error specifically
+            if "INVALID_PAYMENT_INSTRUMENT" in error_message:
+                print("\n" + "=" * 60)
+                print("❌ AWS PAYMENT METHOD REQUIRED")
+                print("=" * 60)
+                print("\nYour AWS account needs a valid payment method.")
+                print("\n🔧 Fix this in 5 minutes:")
+                print("\n1. Open: https://console.aws.amazon.com/billing/")
+                print("2. Click 'Payment methods' → 'Add a payment method'")
+                print("3. Enter your credit/debit card details")
+                print("4. Wait 2-5 minutes for verification")
+                print("5. Run this chatbot again")
+                print("\n💰 Cost: FREE for light usage (generous free tier)")
+                print("   - First 10,000 Haiku requests/month FREE")
+                print("   - First 1,000 Sonnet requests/month FREE")
+                print("=" * 60)
+                return "\n⚠️  Please add a payment method to continue (see instructions above)"
+            
             return f"AWS Error ({error_code}): {error_message}"
         except Exception as e:
             return f"Error: {str(e)}"
@@ -91,30 +110,58 @@ def main():
     ]
     
     chatbot = None
+    working_model = None
+    
     for model_id, model_name in models_to_try:
         try:
             print(f"\n🔄 Trying {model_name}...")
             temp_chatbot = BedrockChatbot(model_id=model_id)
             
-            # Test the model with a simple request
-            test_response = temp_chatbot.chat("Hi")
-            if "AWS Error" not in test_response and "Error:" not in test_response:
-                chatbot = temp_chatbot
-                print(f"✅ Connected successfully using {model_name}!\n")
-                break
-            else:
-                print(f"❌ {model_name} not accessible: {test_response}")
-                temp_chatbot.clear_history()
+            # Test with TWO messages to ensure it's really working
+            test1 = temp_chatbot.chat("Hi")
+            
+            # Check for payment errors
+            if "INVALID_PAYMENT_INSTRUMENT" in test1 or "⚠️" in test1:
+                print(f"❌ Payment method required")
+                continue
+            elif "AWS Error" in test1 or "Error:" in test1:
+                print(f"❌ Access denied or not available")
+                continue
+            
+            # Second test to confirm it's stable
+            test2 = temp_chatbot.chat("Test")
+            if "INVALID_PAYMENT_INSTRUMENT" in test2 or "⚠️" in test2:
+                print(f"❌ Payment validation failed on second test")
+                continue
+            elif "AWS Error" in test2 or "Error:" in test2:
+                print(f"❌ Unstable connection")
+                continue
+            
+            # Model is working!
+            chatbot = temp_chatbot
+            chatbot.clear_history()  # Clear test messages
+            working_model = model_name
+            print(f"✅ Successfully validated {model_name}!\n")
+            break
+            
         except Exception as e:
-            print(f"❌ {model_name} failed: {str(e)}")
+            print(f"❌ Failed: {str(e)[:50]}")
+            continue
     
     if not chatbot:
-        print("\n❌ Could not connect to any Claude models.")
-        print("\nPlease enable model access:")
-        print("  1. Go to AWS Console → Bedrock → Model access")
-        print("  2. Request access for Claude models")
-        print("  3. Fill out the use case form")
-        print("  4. Wait for approval (usually instant)")
+        print("\n" + "=" * 60)
+        print("❌ PAYMENT METHOD REQUIRED")
+        print("=" * 60)
+        print("\nAWS Bedrock requires a valid payment method.")
+        print("\n📋 To fix this:")
+        print("\n1. Go to: https://console.aws.amazon.com/billing/")
+        print("2. Click 'Payment methods' in the left menu")
+        print("3. Add a valid credit/debit card")
+        print("4. Wait 2-5 minutes for AWS to verify")
+        print("5. Run this chatbot again")
+        print("\n💡 Note: AWS Bedrock has a free tier, but requires")
+        print("   a payment method on file for billing purposes.")
+        print("\n" + "=" * 60)
         return
     
     # Chat loop
